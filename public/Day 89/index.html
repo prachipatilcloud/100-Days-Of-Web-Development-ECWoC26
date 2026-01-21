@@ -552,52 +552,7 @@
                     </div>
                 `;
 
-                // 🔽 NEW: Edit button event
-                card.querySelector('.edit-btn').addEventListener('click', () => {
-                    openEditDevice(device);
-                });
-
-                // 🔽 NEW: Delete button event
-                card.querySelector('.delete-btn').addEventListener('click', () => {
-                    deleteDevice(device.id);
-
-                    // 🔽 NEW: Open delete confirmation modal
-                    function deleteDevice(id) {
-                        deleteDeviceId = id;
-
-                        const device = devices.find(d => d.id === id);
-                        document.getElementById('deleteMessage').textContent =
-                            `Are you sure you want to delete "${device.name}"?`;
-
-                        document.getElementById('deleteConfirmModal').style.display = 'flex';
-                    }
-                });
-
-                //Handle Confirm & Cancel Actions
-                const confirmDeleteBtn = document.getElementById('confirmDelete');
-                const cancelDeleteBtn = document.getElementById('cancelDelete');
-                const deleteModal = document.getElementById('deleteConfirmModal');
-
-                // 🔽 Confirm delete
-                confirmDeleteBtn.addEventListener('click', () => {
-                    const index = devices.findIndex(d => d.id === deleteDeviceId);
-                    if (index > -1) {
-                        showNotification(`${devices[index].name} deleted`);
-                        devices.splice(index, 1);
-                        renderDevices();
-                    }
-
-                    deleteDeviceId = null;
-                    deleteModal.style.display = 'none';
-                });
-
-                // 🔽 Cancel delete
-                cancelDeleteBtn.addEventListener('click', () => {
-                    deleteDeviceId = null;
-                    deleteModal.style.display = 'none';
-                });
-
-                card.querySelector('.toggle-switch').addEventListener('click', () => toggleDevice(device.id));
+                // Event listeners handled via event delegation below (to prevent multiple bindings)
                 devicesGrid.appendChild(card);
             });
 
@@ -750,15 +705,56 @@
             modal.style.display = 'flex';
         }
 
-        // 🔽 NEW: Delete device
+        // Delete device - open confirmation modal
         function deleteDevice(id) {
-            const index = devices.findIndex(d => d.id === id);
+            deleteDeviceId = id;
+            const device = devices.find(d => d.id === id);
+            document.getElementById('deleteMessage').textContent =
+                `Are you sure you want to delete "${device.name}"`;
+            document.getElementById('deleteConfirmModal').style.display = 'flex';
+        }
+
+        // Handle delete confirmation (only attach once)
+        document.getElementById('confirmDelete').addEventListener('click', () => {
+            const index = devices.findIndex(d => d.id === deleteDeviceId);
             if (index > -1) {
                 showNotification(`${devices[index].name} deleted`);
                 devices.splice(index, 1);
                 renderDevices();
             }
-        }
+            deleteDeviceId = null;
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+        });
+
+        // Handle delete cancellation (only attach once)
+        document.getElementById('cancelDelete').addEventListener('click', () => {
+            deleteDeviceId = null;
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+        });
+
+        // Event delegation for device card actions
+        document.getElementById('devicesGrid').addEventListener('click', (e) => {
+            // Handle edit button
+            if (e.target.classList.contains('edit-btn') || e.target.closest('.edit-btn')) {
+                const btn = e.target.classList.contains('edit-btn') ? e.target : e.target.closest('.edit-btn');
+                const deviceId = parseInt(btn.dataset.id);
+                const device = devices.find(d => d.id === deviceId);
+                if (device) openEditDevice(device);
+            }
+            
+            // Handle delete button
+            if (e.target.classList.contains('delete-btn') || e.target.closest('.delete-btn')) {
+                const btn = e.target.classList.contains('delete-btn') ? e.target : e.target.closest('.delete-btn');
+                const deviceId = parseInt(btn.dataset.id);
+                deleteDevice(deviceId);
+            }
+            
+            // Handle toggle switch
+            if (e.target.classList.contains('toggle-switch')) {
+                const deviceId = parseInt(e.target.dataset.id);
+                toggleDevice(deviceId);
+            }
+        });
     </script>
 </body>
 </html>
